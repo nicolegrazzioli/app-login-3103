@@ -6,12 +6,45 @@ import 'package:app_final/screens/register_screen.dart';
 
 // statefull -- as coisas mudam de estado, ocupa mais espaço operacional
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   //variavel iniciando nome com _ fica oculta (como se fosse private)
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); //cria e inicializa
-  // final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _login() {
+    if (_formKey.currentState!.validate()) {
+      if ((_emailController.text == 'admin@admin.com' && _passwordController.text == 'admin') || (_emailController.text == 'a@a' && _passwordController.text == 'a')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => /*manda para nova rota*/ HomeScreen(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('E-mail ou senha incorretos!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +65,13 @@ class LoginScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextFormField(
+                  controller: _emailController,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor, insira o e-mail';
+                    }
+                    return null;
+                  },
                   decoration: const InputDecoration(
                     labelText: "Email",
                     border: OutlineInputBorder(),
@@ -39,11 +79,18 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              //input email
+              //input senha
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextFormField(
+                  controller: _passwordController,
                   obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor, insira a senha';
+                    }
+                    return null;
+                  },
                   decoration: const InputDecoration(
                     labelText: "Senha",
                     border: OutlineInputBorder(),
@@ -52,15 +99,7 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  // Entrar na home simulando autenticação
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                              builder: (context) => /*manda para nova rota*/ HomeScreen(),
-                    ),
-                  );
-                },
+                onPressed: _login,
                 child: const Text("Entrar"),
               ),
               TextButton(
