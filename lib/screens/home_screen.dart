@@ -184,17 +184,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5F5F5),
+                            backgroundColor: const Color(0xFF0F172A),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            side: BorderSide(color: Color(0xFF475569), width: 1),
                             elevation: 0,
                           ),
                           onPressed: () {},
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("filtrar", style: TextStyle(color: Color(0xFF0F172A), fontSize: 16)),
-                              Icon(Icons.keyboard_arrow_down, color: Color(0xFF0F172A)),
+                              Text("filtrar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
+                              Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
                             ],
                           ),
                         ),
@@ -203,17 +204,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5F5F5),
+                            backgroundColor: const Color(0xFF0F172A),
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            side: BorderSide(color: Color(0xFF475569), width: 1),
                             elevation: 0,
                           ),
                           onPressed: () {},
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("ordenar", style: TextStyle(color: Color(0xFF0F172A), fontSize: 16)),
-                              Icon(Icons.keyboard_arrow_down, color: Color(0xFF0F172A)),
+                              Text("ordenar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
+                              Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
                             ],
                           ),
                         ),
@@ -248,8 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(right: 32.0), // Mais para a esquerda
         child: SizedBox(
-          height: 80, // Tamanho maior
-          width: 80,
+          height: 70, 
+          width: 70,
           child: FloatingActionButton.extended(
             onPressed: () {},
             backgroundColor: const Color(0xFF00E676),
@@ -257,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: const CircleBorder(),
             label: const Text(
               "+",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 48),
+              style: TextStyle(color: Colors.white, fontSize: 48),
             ),
           ),
         ),

@@ -53,7 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Logo
                   Center(
                     child: RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         children: [
                           TextSpan(
                             text: "pila.",
@@ -279,3 +279,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+

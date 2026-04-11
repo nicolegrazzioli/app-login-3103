@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Logo
                   Center(
                     child: RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         children: [
                           TextSpan(
                             text: "pila.",
@@ -237,3 +237,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
