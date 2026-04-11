@@ -81,3 +81,11 @@ f. laranjão (FF8F00)
 7. Fontes
 - Plus Jakarta Sans - títulos
 - Inter - corpo de texto
+
+
+rodar no celular
+Pegue o cabo USB e conecte seu celular no computador.
+No seu celular, vá em Configurações > Sobre o Telefone e toque 7 vezes seguidas em "Número da Versão" (ou "Build Number") para ativar o modo desenvolvedor.
+Volte nas configurações, vá em Opções de Desenvolvedor e ative a Depuração USB (USB Debugging).
+Seu celular vai pedir permissão na tela, clique em "Permitir".
+Pronto! Agora volte no seu terminal do PC e rode flutter run. Seu próprio aparelho vai aparecer na lista e o app vai abrir na palma da sua mão!
