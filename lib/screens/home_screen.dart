@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:app_final/screens/profile_screen.dart';
+import 'package:app_final/screens/trip_details_screen.dart';
 
 // --- MOCK API E MODELOS ---
 // Estes modelos representam as informações que virão do seu back-end em Java futuramente via JSON.
@@ -13,6 +15,57 @@ class AppColors {
   static const Color offWhite = Color(0xFFF5F5F5);
   static const Color silverBorder = Color(0xFF475569);
 }
+
+class Category {
+  final String name;
+  final IconData icon;
+  final Color color;
+
+  Category({required this.name, required this.icon, required this.color});
+}
+
+final List<Category> categories = [
+  Category(
+    name: 'Alimentação',
+    icon: Icons.restaurant,
+    color: const Color(0xFFFF7043),
+  ),
+  Category(
+    name: 'Mercado',
+    icon: Icons.shopping_basket,
+    color: const Color(0xFF66BB6A),
+  ),
+  Category(
+    name: 'Transporte',
+    icon: Icons.directions_car,
+    color: const Color(0xFF42A5F5),
+  ),
+  Category(
+    name: 'Hospedagem',
+    icon: Icons.hotel,
+    color: const Color(0xFF7986CB),
+  ),
+  Category(
+    name: 'Lazer',
+    icon: Icons.confirmation_number,
+    color: const Color(0xFFEC407A),
+  ),
+  Category(
+    name: 'Compras',
+    icon: Icons.local_mall,
+    color: const Color(0xFF26C6DA),
+  ),
+  Category(
+    name: 'Serviços',
+    icon: Icons.assignment,
+    color: const Color(0xFF78909C),
+  ),
+  Category(
+    name: 'Extras',
+    icon: Icons.auto_awesome,
+    color: const Color(0xFFFFCA28),
+  ),
+];
 
 class User {
   final String name;
@@ -171,59 +224,62 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           
+          // Filter and Sort row (FIXED OUTSIDE SCROLL)
+          Padding(
+            padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 0.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      side: const BorderSide(color: Color(0xFF475569), width: 1),
+                      elevation: 0,
+                    ),
+                    onPressed: () {},
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("filtrar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
+                        Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      side: const BorderSide(color: Color(0xFF475569), width: 1),
+                      elevation: 0,
+                    ),
+                    onPressed: () {},
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("ordenar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
+                        Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Body List
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Filter and Sort row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F172A),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            side: BorderSide(color: Color(0xFF475569), width: 1),
-                            elevation: 0,
-                          ),
-                          onPressed: () {},
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("filtrar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
-                              Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F172A),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            side: BorderSide(color: Color(0xFF475569), width: 1),
-                            elevation: 0,
-                          ),
-                          onPressed: () {},
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("ordenar", style: TextStyle(color: Color(0xFFF5F5F5), fontSize: 16)),
-                              Icon(Icons.keyboard_arrow_down, color: Color(0xFFF5F5F5)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
                   // Dynamic Cards list
                   if (_trips != null && _trips!.isNotEmpty)
                     ..._trips!.map((trip) {
@@ -278,8 +334,17 @@ class _HomeScreenState extends State<HomeScreen> {
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
+          currentIndex: 0,
+          onTap: (index) {
+            if (index == 3) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            }
+          },
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 28), label: "Menu 1"),
+            BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: "Menu 1"),
             BottomNavigationBarItem(icon: Icon(Icons.description_outlined, size: 28), label: "Menu 2"),
             BottomNavigationBarItem(icon: Icon(Icons.search, size: 28), label: "Menu 3"),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline, size: 28), label: "Menu 4"),
@@ -292,19 +357,23 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- WIDGETS AUXILIARES DOS CARDS ---
 
   Widget _buildSolidCard(Trip trip) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TripDetailsScreen(trip: trip)),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            height: 80,
-          ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(top: 40.0, left: 16.0, right: 16.0, bottom: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -338,15 +407,22 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
+    ),
+   );
   }
 
   Widget _buildImageCard(Trip trip) {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        image: DecorationImage(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TripDetailsScreen(trip: trip)),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          image: DecorationImage(
           image: NetworkImage(trip.imageUrl!),
           fit: BoxFit.cover,
         ),
@@ -363,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(top: 50.0, left: 16.0, right: 16.0, bottom: 16.0),
         alignment: Alignment.bottomLeft,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -397,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
+    ),
+   );
   }
 }
