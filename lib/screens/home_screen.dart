@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:app_final/screens/profile_screen.dart';
 import 'package:app_final/screens/trip_details_screen.dart';
 import '../core/models/user.dart';
@@ -68,57 +67,57 @@ final List<Category> categories = [
   ),
 ];
 
-// class User {
-//   final String name;
-//   User({required this.name});
-// }
-//
-// class Trip {
-//   final String title;
-//   final String dateInterval;
-//   final double amount;
-//   final String? imageUrl;
-//
-//   Trip({
-//     required this.title,
-//     required this.dateInterval,
-//     required this.amount,
-//     this.imageUrl,
-//   });
+class Trip {
+  final String title;
+  final String dateInterval;
+  final double amount;
+  final String? imageUrl;
+
+  Trip({
+    required this.title,
+    required this.dateInterval,
+    required this.amount,
+    this.imageUrl,
+  });
 }
 
-// class ApiService {
-//   // Simula a busca dos dados do usuário logado
-//   Future<User> fetchUser() async {
-//     await Future.delayed(const Duration(seconds: 1)); // Simula tempo de rede
-//     return User(name: "jnsdkfjsejgfk");
-//   }
-//
-//   // Simula a busca das viagens do usuário no banco de dados
-//   Future<List<Trip>> fetchTrips() async {
-//     await Future.delayed(const Duration(seconds: 1)); // Simula tempo de rede
-//     return [
-//       Trip(
-//         title: "Viagem a Trabalho",
-//         dateInterval: "12/05/2026 - 15/05/2026",
-//         amount: 1545.90,
-//         imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/800px-New_york_times_square-terabass.jpg",
-//       ),
-//       Trip(
-//         title: "Férias de Inverno",
-//         dateInterval: "01/07/2026 - 15/07/2026",
-//         amount: 4712.30,
-//         imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Lago_di_Braies_-_2_-_Sept._2016.jpg/800px-Lago_di_Braies_-_2_-_Sept._2016.jpg",
-//       ),
-//       Trip(
-//         title: "Encontro de Devs",
-//         dateInterval: "22/09/2026 - 25/09/2026",
-//         amount: 830.00,
-//         imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Silicon_Valley_welcome_sign.jpg/800px-Silicon_Valley_welcome_sign.jpg",
-//       ),
-//     ];
-//   }
-// }
+class ApiService {
+  // Simula a busca dos dados do usuário logado
+  Future<User> fetchUser() async {
+    await Future.delayed(const Duration(seconds: 1)); // Simula tempo de rede
+    return User(
+      id: 1,
+      name: "Nicole (Mock)",
+      email: "nicole@exemplo.com",
+      password: "123",
+    );
+  }
+
+  // Simula a busca das viagens do usuário no banco de dados
+  Future<List<Trip>> fetchTrips() async {
+    await Future.delayed(const Duration(seconds: 1)); // Simula tempo de rede
+    return [
+      Trip(
+        title: "Viagem a Trabalho",
+        dateInterval: "12/05/2026 - 15/05/2026",
+        amount: 1545.90,
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/800px-New_york_times_square-terabass.jpg",
+      ),
+      Trip(
+        title: "Férias de Inverno",
+        dateInterval: "01/07/2026 - 15/07/2026",
+        amount: 4712.30,
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Lago_di_Braies_-_2_-_Sept._2016.jpg/800px-Lago_di_Braies_-_2_-_Sept._2016.jpg",
+      ),
+      Trip(
+        title: "Encontro de Devs",
+        dateInterval: "22/09/2026 - 25/09/2026",
+        amount: 830.00,
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Silicon_Valley_welcome_sign.jpg/800px-Silicon_Valley_welcome_sign.jpg",
+      ),
+    ];
+  }
+}
 
 // --- TELA ---
 
@@ -290,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? _buildSolidCard(trip)
                             : _buildImageCard(trip),
                       );
-                    }).toList()
+                    })
                   else
                     const Center(
                       child: Text("Nenhuma viagem cadastrada."),

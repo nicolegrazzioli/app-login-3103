@@ -1,5 +1,4 @@
 import 'package:app_final/core/app_database.dart';
-import '../../screens/home_screen.dart';
 import '../models/user.dart';
 
 class UserDao {
@@ -10,7 +9,7 @@ class UserDao {
     return db.insert(table, user.toMap());
   }
 
-  /*Future<User?>*/ getUser(String email, String password) async {
+  Future<User?> getUser(String email, String password) async {
     final db = await AppDatabase().database;
     final result = await db.query(
       table,

@@ -1,6 +1,15 @@
 Proposta de Projeto: Gestor de Gastos Multimoedas
 Nome: pila.go
-testar: `flutter run -d chrome`
+testar no chrome: 
+```bash
+flutter run -d chrome
+```
+testar no mobile:
+1. Sobre o Telefone 
+2. "Número da Versão" (ou "Build Number")
+```bash
+flutter run
+```
 
 1. Descrição do Projeto
 
@@ -56,27 +65,6 @@ orçamento em sua moeda nativa (BRL).
       dados financeiros.
    ●​ Segurança: Protocolo HTTPS, autenticação via Token JWT e criptografia de
       dados sensíveis em repouso.
-
-6. Design e cores (ta errado isso aqui)
-
-a. azul marinho profundo 1 (1A2B48)
-<img src="1A2B48.png" width="300" height="150">
-
-b. azul marinho profundo 2 (001E28)
-<img src="001E28.png" width="300" height="150">
-
-c. verde brilhante (00E676)
-<img src="00E676.png" width="300" height="150">
-
-d. verde escuro (00572C)
-<img src="00572C.png" width="300" height="150">
-
-e. branco papel manteiga (F5F5F5)
-<img src="F5F5F5.png" width="300" height="150">
-
-f. laranjão (FF8F00)
-<img src="FF8F00.png" width="300" height="150">
-
 
 7. Fontes
 - Plus Jakarta Sans - títulos

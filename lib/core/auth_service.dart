@@ -1,4 +1,4 @@
-import 'dao/userDAO.dart';
+import 'dao/user_dao.dart';
 import 'models/user.dart';
 
 class AuthService {
