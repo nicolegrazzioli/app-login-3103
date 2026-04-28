@@ -15,7 +15,7 @@ class AppDatabase {
     _database = await _initDatabase();
     return _database!;
   }
-
+ 
   Future<Database> _initDatabase() async {
     /* final path = join(
         await getDatabasesPath(), 'database.db'); //onde tem que abrir/criar

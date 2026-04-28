@@ -13,12 +13,7 @@ flutter run
 
 1. Descrição do Projeto
 
-Aplicativo mobile desenvolvido em Flutter com backend em Java (Spring Boot),
-projetado para auxiliar viajantes e estudantes em intercâmbio no controle de suas
-finanças. O diferencial do app é a organização por "Pastas de Viagem" e a
-capacidade de lidar com múltiplas moedas simultaneamente, permitindo que o
-usuário registre gastos em moeda estrangeira e visualize o impacto real no seu
-orçamento em sua moeda nativa (BRL).
+Assistente financeiro mobile (Flutter + Java), focado em viajantes e intercambistas. O diferencial do app é a organização por "Pastas de Viagem" e a gestão inteligente de Custo Médio (VET). Ele permite que o usuário registre gastos em moeda estrangeira e visualize instantaneamente o impacto real em sua moeda nativa (BRL), baseando-se no valor efetivo pago na compra da moeda.
 
 2. Público-Alvo
 
@@ -28,33 +23,11 @@ orçamento em sua moeda nativa (BRL).
 
 3. Funcionalidades Principais (MVP)
 
-   ●​ Gestão de Viagens: Criação de pastas específicas para cada destino ou
-      período.
-   ●​ Registro de Despesas Multimoedas: Entrada de valores em EUR, USD,
-      BRL, etc., com conversão automática
-   ●​ Categorização Especializada: Divisão de gastos em: Alimentação,
-      Deslocamento, Entretenimento, Acomodação, Burocracia (Vistos/Seguros) e
-      Compra de Moeda.
-   ●​ Histórico Detalhado: Visualização cronológica de todas as transações de
-      uma viagem específica.
-   ●​ Dashboards de Consumo: Gráficos que mostram onde o dinheiro está
-      sendo gasto dentro de cada categoria.
-
-4. Regras de Negócio (RN)
-
-   ●​ RN01 – Autenticação: O acesso aos dados é exclusivo de usuários
-      autenticados via JWT. Um usuário não pode visualizar viagens de terceiros.
-   ●​ RN02 – Isolamento por Pasta: Toda despesa deve, obrigatoriamente, estar
-      vinculada a uma "Viagem" criada previamente.
-   ●​ RN03 – Conversão de Moeda: O sistema deve permitir que o usuário defina
-      uma taxa de câmbio manual (baseada no que ele pagou na casa de câmbio)
-      ou utilize a cotação comercial do dia via API externa.
-   ●​ RN04 – Integridade Monetária: Os valores financeiros devem ser
-      armazenados no banco de dados como números inteiros (centavos) para
-      evitar erros de arredondamento de ponto flutuante.
-   ●​ RN05 – Persistência Offline: O app deve permitir o registro de gastos sem
-      conexão à internet, sincronizando com o servidor assim que detectar uma
-      conexão ativa.
+   - Gestão de Viagens: Criação de pastas para separar gastos de diferentes destinos.
+   - Gestão de Saldo Global (Carteira): Registro de aportes (compra de moeda) com cálculo automático de VET Médio.
+   - Registro de Despesas Contextual: Entrada de gastos com conversão automática baseada no custo médio da "pasta".
+   - Categorização Especializada: Alimentação, Mercado, Transporte, Hospedagem, Lazer, Compras, Burocracia e Saúde.
+   - Pesquisa e Filtros: Busca contextual de gastos por título, categoria ou data dentro de cada viagem.Persistência Local: Armazenamento robusto para uso offline durante deslocamentos.
 
 5. Arquitetura e Tecnologias
 
@@ -66,7 +39,7 @@ orçamento em sua moeda nativa (BRL).
    ●​ Segurança: Protocolo HTTPS, autenticação via Token JWT e criptografia de
       dados sensíveis em repouso.
 
-7. Fontes
+6. Fontes
 - Plus Jakarta Sans - títulos
 - Inter - corpo de texto
 
