@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:app_final/screens/home_screen.dart';class RegisterScreen extends StatefulWidget {
+import 'package:app_final/screens/home_screen.dart';
+import 'package:app_final/core/authentication/auth_service.dart';
+import 'package:app_final/core/models/user.dart';
+
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
@@ -23,16 +27,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _register() {
+  void _register() async {
     if (_formKey.currentState!.validate()) {
-      // Futuramente, enviar os dados para um banco de dados
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Conta criada com sucesso!'),
-          backgroundColor: Colors.green,
-        ),
+      final newUser = User(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
-      Navigator.pop(context); // Volta para a tela de login
+      final success = await AuthService().register(newUser);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Conta criada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Volta para a tela de login
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Erro ao criar conta. Tente novamente.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 

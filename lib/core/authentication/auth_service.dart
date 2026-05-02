@@ -1,12 +1,12 @@
-import 'dao/user_dao.dart';
-import 'models/user.dart';
+import 'package:app_final/core/dao/userDAO.dart';
+import '../models/user.dart';
 
 class AuthService {
-  final UserDao _userDao = UserDao();
+  final UserDAO _userDAO = UserDAO();
 
   Future<bool> register(User user) async {
     try {
-      await _userDao.insertUser(user);
+      await _userDAO.insertUser(user);
       return true;
     } catch (e) {
       return false;
@@ -14,6 +14,6 @@ class AuthService {
   }
 
   Future<User?> login(String email, String password) async {
-    return await _userDao.getUser(email, password);
+    return await _userDAO.getUser(email, password);
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_final/screens/home_screen.dart';
 import 'package:app_final/screens/register_screen.dart';
-
+import 'package:app_final/core/authentication/auth_service.dart';
 // statefull -- as coisas mudam de estado, ocupa mais espaço operacional
 
 /*
@@ -32,13 +32,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      if ((_emailController.text == 'admin@admin.com' && _passwordController.text == 'admin') || (_emailController.text == 'a@a' && _passwordController.text == 'a')) {
+      final user = await AuthService().login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      if (!mounted) return;
+      
+      if (user != null) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => /*manda para nova rota*/ HomeScreen(),
+            builder: (context) => const HomeScreen(),
           ),
         );
       } else {

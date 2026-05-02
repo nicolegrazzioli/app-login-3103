@@ -68,7 +68,7 @@ class AppDatabase {
               date TEXT,
               is_average_cost INTEGER,  -- 1 para usar VET, 0 para câmbio manual
               exchange_rate REAL,       -- preenchido se is_average_cost for 0
-              amount_brl REAL,          -- valor convertido em R$ no momento do gasto
+              amount_brl REAL,          -- valor convertido em RS no momento do gasto
               description TEXT,
               photo_path TEXT,
               FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE
