@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app_final/screens/home_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import 'balances_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -217,7 +218,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
           } else if (index == 1) {
-            // Navegar para saldos
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BalancesScreen()),
+            );
           }
         },
       ),

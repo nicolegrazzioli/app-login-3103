@@ -7,6 +7,7 @@ import '../core/theme/app_colors.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/search_filter_bar.dart';
 import '../widgets/custom_fab.dart';
+import 'balances_screen.dart';
 
 // --- MOCK API E MODELOS ---
 // Estes modelos representam as informações que virão do seu back-end em Java futuramente via JSON.
@@ -273,9 +274,12 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: 0,
         onTap: (index) {
           if (index == 1) {
-            // Saldos
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BalancesScreen()),
+            );
           } else if (index == 2) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );

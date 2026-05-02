@@ -8,6 +8,7 @@ import '../widgets/custom_fab.dart';
 import 'profile_screen.dart';
 import 'new_expense_screen.dart';
 import 'new_trip_screen.dart';
+import 'balances_screen.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -188,8 +189,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               context,
               MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BalancesScreen()),
+            );
           } else if (index == 2) {
-             Navigator.push(
+             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );

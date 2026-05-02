@@ -11,4 +11,6 @@ class AppColors {
   // Cores adicionais baseadas no protótipo
   static const Color cardBackground = Color(0xFF1E293B);
   static const Color textSecondary = Color(0xFF94A3B8);
+  static const Color dollarColor = Color(0xFF85BB65);
+  static const Color euroColor = Color(0xFFFFD700);
 }
