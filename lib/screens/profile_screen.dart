@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_final/screens/home_screen.dart';
+import '../core/theme/app_colors.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -206,27 +208,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.darkBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent, // Fica com a cor do container pai
-          unselectedItemColor: const Color(0xFFF5F5F5),
-          selectedItemColor: const Color(0xFFF5F5F5),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          elevation: 0,
-          currentIndex: 3, // Seleciona o 4º item (perfil)
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 28), label: "Menu 1"),
-            BottomNavigationBarItem(icon: Icon(Icons.description_outlined, size: 28), label: "Menu 2"),
-            BottomNavigationBarItem(icon: Icon(Icons.search, size: 28), label: "Menu 3"),
-            BottomNavigationBarItem(icon: Icon(Icons.person, size: 28), label: "Menu 4"),
-          ],
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: 2,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else if (index == 1) {
+            // Navegar para saldos
+          }
+        },
       ),
     );
   }

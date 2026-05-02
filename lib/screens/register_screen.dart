@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app_final/screens/home_screen.dart';
 import 'package:app_final/core/authentication/auth_service.dart';
 import 'package:app_final/core/models/user.dart';
+import '../core/theme/app_colors.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

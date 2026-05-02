@@ -10,6 +10,7 @@ pagina inicio:
 - filtros, ordenar e pesquisar serao implementados depois
 - ao clicar na imagem da viagem, abre o detalhe da viagem (pagina da viagem especifica)
 - menu inferior fixo: inicio, saldos, perfil
+- o botão "+" vai para a pagina nova viagem para criar uma nova viagem
 
 pagina da viagem especifica (dinamica para cada card criado é criada uma):
 - titulo + datas (pode ser editado pelo icon lapis, indo para a pagina "nova viagem" preenchida com os dados atuais da viagem especifica), data de inicio deafult como o dia atual
