@@ -1,0 +1,63 @@
+class Expense {
+  final int? id;
+  final int tripId;
+  final String title;
+  final double amount;
+  final String currency;
+  final String category;
+  final String date;
+  final bool isAverageCost;
+  final double? exchangeRate;
+  final double amountBrl;
+  final String? description;
+  final String? photoPath;
+
+  Expense({
+    this.id,
+    required this.tripId,
+    required this.title,
+    required this.amount,
+    required this.currency,
+    required this.category,
+    required this.date,
+    required this.isAverageCost,
+    this.exchangeRate,
+    required this.amountBrl,
+    this.description,
+    this.photoPath,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'trip_id': tripId,
+      'title': title,
+      'amount': amount,
+      'currency': currency,
+      'category': category,
+      'date': date,
+      'is_average_cost': isAverageCost ? 1 : 0, // SQLite armazena booleanos como 0 ou 1
+      'exchange_rate': exchangeRate,
+      'amount_brl': amountBrl,
+      'description': description,
+      'photo_path': photoPath,
+    };
+  }
+
+  factory Expense.fromMap(Map<String, dynamic> map) {
+    return Expense(
+      id: map['id'],
+      tripId: map['trip_id'],
+      title: map['title'],
+      amount: map['amount'],
+      currency: map['currency'],
+      category: map['category'],
+      date: map['date'],
+      isAverageCost: map['is_average_cost'] == 1,
+      exchangeRate: map['exchange_rate'],
+      amountBrl: map['amount_brl'],
+      description: map['description'],
+      photoPath: map['photo_path'],
+    );
+  }
+}

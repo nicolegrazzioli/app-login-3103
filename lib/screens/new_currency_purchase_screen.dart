@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
+import '../core/models/currency_transaction.dart';
+import '../core/models/wallet.dart';
+import '../core/dao/currency_transaction_dao.dart';
+import '../core/dao/wallet_dao.dart';
+
 class NewCurrencyPurchaseScreen extends StatefulWidget {
-  final Map<String, dynamic>? purchaseData;
-  final bool isEditing;
+  final int userId;
+  final CurrencyTransaction? transaction;
 
   const NewCurrencyPurchaseScreen({
     super.key,
-    this.purchaseData,
-    this.isEditing = false,
+    required this.userId,
+    this.transaction,
   });
 
   @override
@@ -21,10 +26,10 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   
   String _selectedCurrency = 'Euro';
-  final List<String> _currencies = ['Euro', 'Dólar', 'Libra'];
+  final List<String> _currencies = ['Euro', 'Dólar', 'Libra', 'Nova'];
   
   String _selectedOrigin = 'Wise';
-  final List<String> _origins = ['Wise', 'Revolut', 'Picnic', 'Papel', 'Novo'];
+  final List<String> _origins = ['Wise', 'Revolut', 'Picnic', 'Papel', 'Nova'];
   
   DateTime _selectedDate = DateTime.now();
 
@@ -33,21 +38,41 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
     super.initState();
     _amountController.addListener(_updateVET);
     _totalBRLController.addListener(_updateVET);
+    
+    _loadPersistedOptions();
 
-    if (widget.isEditing && widget.purchaseData != null) {
-      _amountController.text = widget.purchaseData!['amount'] ?? '';
-      _totalBRLController.text = widget.purchaseData!['totalBRL'] ?? '';
-      _selectedCurrency = widget.purchaseData!['currency'] ?? 'Euro';
+    if (widget.transaction != null) {
+      final data = widget.transaction!;
+      _amountController.text = data.amount.toString();
+      _totalBRLController.text = data.amountBrl.toString();
+      _selectedCurrency = data.currency;
       
-      if (widget.purchaseData!['origin'] != null) {
-        String origin = widget.purchaseData!['origin'];
-        if (!_origins.contains(origin)) {
-          _origins.insert(_origins.length - 1, origin);
-        }
-        _selectedOrigin = origin;
+      String origin = data.source;
+      if (!_origins.contains(origin)) {
+        _origins.insert(_origins.length - 1, origin);
       }
+      _selectedOrigin = origin;
       
-      _descriptionController.text = widget.purchaseData!['description'] ?? '';
+      _descriptionController.text = data.description ?? '';
+      
+      try {
+        final dateParts = data.date.split('/');
+        _selectedDate = DateTime(int.parse(dateParts[2]), int.parse(dateParts[1]), int.parse(dateParts[0]));
+      } catch (e) {
+        _selectedDate = DateTime.now();
+      }
+    }
+  }
+
+  Future<void> _loadPersistedOptions() async {
+    final transactions = await CurrencyTransactionDAO().getTransactionsByUser(widget.userId);
+    if (mounted) {
+      setState(() {
+        for (var t in transactions) {
+          if (!_currencies.contains(t.currency)) _currencies.insert(_currencies.length - 1, t.currency);
+          if (!_origins.contains(t.source)) _origins.insert(_origins.length - 1, t.source);
+        }
+      });
     }
   }
 
@@ -72,21 +97,21 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
     return "VET: R\$ 0,00";
   }
 
-  void _showNewOriginDialog() {
-    final TextEditingController newOriginController = TextEditingController();
+  void _showNewOptionDialog({required bool isCurrency}) {
+    final TextEditingController newOptionController = TextEditingController();
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.cardBackground,
-        title: const Text("Nova Origem", style: TextStyle(color: Colors.white)),
+        title: Text(isCurrency ? "Nova Moeda" : "Nova Origem", style: const TextStyle(color: Colors.white)),
         content: TextField(
-          controller: newOriginController,
+          controller: newOptionController,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: "Ex: Nomad",
+            hintText: isCurrency ? "Ex: Peso Argentino" : "Ex: Nomad",
             hintStyle: const TextStyle(color: Colors.white70),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.silverBorder)),
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.silverBorder)),
             focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.moneyGreen)),
           ),
         ),
@@ -94,7 +119,11 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                _selectedOrigin = _origins.first;
+                if (isCurrency) {
+                  _selectedCurrency = _currencies.first;
+                } else {
+                  _selectedOrigin = _origins.first;
+                }
               });
               Navigator.pop(ctx);
             },
@@ -102,14 +131,24 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
           ),
           TextButton(
             onPressed: () {
-              if (newOriginController.text.trim().isNotEmpty) {
+              if (newOptionController.text.trim().isNotEmpty) {
+                final newValue = newOptionController.text.trim();
                 setState(() {
-                  _origins.insert(_origins.length - 1, newOriginController.text.trim());
-                  _selectedOrigin = newOriginController.text.trim();
+                  if (isCurrency) {
+                    _currencies.insert(_currencies.length - 1, newValue);
+                    _selectedCurrency = newValue;
+                  } else {
+                    _origins.insert(_origins.length - 1, newValue);
+                    _selectedOrigin = newValue;
+                  }
                 });
               } else {
                 setState(() {
-                  _selectedOrigin = _origins.first;
+                  if (isCurrency) {
+                    _selectedCurrency = _currencies.first;
+                  } else {
+                    _selectedOrigin = _origins.first;
+                  }
                 });
               }
               Navigator.pop(ctx);
@@ -163,12 +202,12 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.isEditing ? "editar saldo" : "adicionar saldo",
+          widget.transaction != null ? "editar saldo" : "adicionar saldo",
           style: const TextStyle(color: AppColors.offWhite, fontSize: 24, fontWeight: FontWeight.w500, fontFamily: 'Inter'),
         ),
         centerTitle: true,
         toolbarHeight: 80,
-        actions: widget.isEditing ? [
+        actions: widget.transaction != null ? [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: () {
@@ -181,7 +220,9 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar", style: TextStyle(color: Colors.white))),
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        // TODO: Implement delete logic similar to balances_screen dismissible if needed here
+                        // For now, simpler to just let the user delete from the list in balances_screen
                         Navigator.pop(ctx);
                         Navigator.pop(context);
                       },
@@ -230,7 +271,11 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
                         style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300),
                         isExpanded: true,
                         onChanged: (String? newValue) {
-                          if (newValue != null) setState(() => _selectedCurrency = newValue);
+                          if (newValue == 'Nova') {
+                            _showNewOptionDialog(isCurrency: true);
+                          } else if (newValue != null) {
+                            setState(() => _selectedCurrency = newValue);
+                          }
                         },
                         items: _currencies.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(value: value, child: Text(value));
@@ -278,8 +323,8 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300),
                   isExpanded: true,
                   onChanged: (String? newValue) {
-                    if (newValue == 'Novo') {
-                      _showNewOriginDialog();
+                    if (newValue == 'Nova') {
+                      _showNewOptionDialog(isCurrency: false);
                     } else if (newValue != null) {
                       setState(() => _selectedOrigin = newValue);
                     }
@@ -380,7 +425,89 @@ class _NewCurrencyPurchaseScreenState extends State<NewCurrencyPurchaseScreen> {
                     backgroundColor: AppColors.bottomGreen,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () async {
+                    if (_amountController.text.trim().isEmpty || _totalBRLController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preencha os valores primeiro')));
+                      return;
+                    }
+                    
+                    final double amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
+                    final double totalBRL = double.tryParse(_totalBRLController.text.replaceAll(',', '.')) ?? 0;
+                    
+                    if (amount <= 0 || totalBRL <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Valores devem ser maiores que zero')));
+                      return;
+                    }
+                    
+                    final double vet = totalBRL / amount;
+
+                    final transaction = CurrencyTransaction(
+                      id: widget.transaction?.id,
+                      userId: widget.userId,
+                      amount: amount,
+                      currency: _selectedCurrency,
+                      amountBrl: totalBRL,
+                      source: _selectedOrigin,
+                      date: "${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}",
+                      vetRate: vet,
+                      description: _descriptionController.text.trim(),
+                    );
+                    
+                    final walletDao = WalletDAO();
+                    final transactionDao = CurrencyTransactionDAO();
+                    
+                    if (widget.transaction != null) {
+                      // Estamos editando. Precisamos reverter o impacto da transaction antiga no wallet e somar a nova
+                      final oldAmount = widget.transaction!.amount;
+                      final oldBrl = widget.transaction!.amountBrl;
+                      
+                      await transactionDao.updateTransaction(transaction);
+                      
+                      final wallet = await walletDao.getWallet(widget.userId, _selectedCurrency);
+                      if (wallet != null) {
+                        double newBalance = (wallet.balance - oldAmount) + amount;
+                        // Para um VET puramente médio, a lógica real precisaria somar todos os BRL / todas as amounts.
+                        // Calculo simplificado para refletir a nova adição:
+                        // Descobre o BRL total antigo:
+                        double totalBrlAntigo = wallet.balance * wallet.averageVet;
+                        double novoTotalBrl = (totalBrlAntigo - oldBrl) + totalBRL;
+                        double newVet = newBalance > 0 ? (novoTotalBrl / newBalance) : 0;
+                        
+                        await walletDao.updateWallet(Wallet(
+                          userId: widget.userId,
+                          currency: _selectedCurrency,
+                          balance: newBalance,
+                          averageVet: newVet,
+                        ));
+                      }
+                    } else {
+                      await transactionDao.insertTransaction(transaction);
+                      
+                      final wallet = await walletDao.getWallet(widget.userId, _selectedCurrency);
+                      if (wallet != null) {
+                        double newBalance = wallet.balance + amount;
+                        double totalBrlAntigo = wallet.balance * wallet.averageVet;
+                        double novoTotalBrl = totalBrlAntigo + totalBRL;
+                        double newVet = novoTotalBrl / newBalance;
+                        
+                        await walletDao.updateWallet(Wallet(
+                          userId: widget.userId,
+                          currency: _selectedCurrency,
+                          balance: newBalance,
+                          averageVet: newVet,
+                        ));
+                      } else {
+                        await walletDao.insertWallet(Wallet(
+                          userId: widget.userId,
+                          currency: _selectedCurrency,
+                          balance: amount,
+                          averageVet: vet,
+                        ));
+                      }
+                    }
+                    
+                    if (mounted) Navigator.pop(context);
+                  },
                   child: const Text("Salvar", style: TextStyle(color: AppColors.offWhite, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),

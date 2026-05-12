@@ -1,0 +1,55 @@
+class CurrencyTransaction {
+  final int? id;
+  final int userId;
+  final double amount;
+  final String currency;
+  final double amountBrl;
+  final String source;
+  final String date;
+  final double vetRate;
+  final String? description;
+  final String? photoPath;
+
+  CurrencyTransaction({
+    this.id,
+    required this.userId,
+    required this.amount,
+    required this.currency,
+    required this.amountBrl,
+    required this.source,
+    required this.date,
+    required this.vetRate,
+    this.description,
+    this.photoPath,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'amount': amount,
+      'currency': currency,
+      'amount_brl': amountBrl,
+      'source': source,
+      'date': date,
+      'vet_rate': vetRate,
+      'description': description,
+      'photo_path': photoPath,
+    };
+  }
+
+  factory CurrencyTransaction.fromMap(Map<String, dynamic> map) {
+    return CurrencyTransaction(
+      id: map['id'],
+      userId: map['user_id'],
+      amount: map['amount'],
+      currency: map['currency'],
+      amountBrl: map['amount_brl'],
+      source: map['source'],
+      date: map['date'],
+      vetRate: map['vet_rate'],
+      description: map['description'],
+      photoPath: map['photo_path'],
+    );
+  }
+}

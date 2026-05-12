@@ -8,6 +8,11 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/search_filter_bar.dart';
 import '../widgets/custom_fab.dart';
 import 'balances_screen.dart';
+import '../core/models/trip.dart';
+import '../core/dao/trip_dao.dart';
+import '../core/dao/userDAO.dart';
+import '../core/dao/expense_dao.dart';
+import '../core/dao/wallet_dao.dart';
 
 // --- MOCK API E MODELOS ---
 // Estes modelos representam as informações que virão do seu back-end em Java futuramente via JSON.
@@ -63,52 +68,7 @@ final List<Category> categories = [
   ),
 ];
 
-class Trip {
-  final String title;
-  final String dateInterval;
-  final double amount;
-  final String? imageUrl;
-
-  Trip({
-    required this.title,
-    required this.dateInterval,
-    required this.amount,
-    this.imageUrl,
-  });
-}
-
-class ApiService {
-  Future<User> fetchUser() async {
-    // await Future.delayed(const Duration(seconds: 1));
-    return User(
-      id: 1,
-      name: "Nicole (Mock)",
-      email: "nicole@exemplo.com",
-      password: "123",
-    );
-  }
-
-  Future<List<Trip>> fetchTrips() async {
-    // await Future.delayed(const Duration(seconds: 1));
-    return [
-      Trip(
-        title: "Viagem a Trabalho",
-        dateInterval: "12/05/2026 - 15/05/2026",
-        amount: 1545.90,
-      ),
-      Trip(
-        title: "Férias de Inverno",
-        dateInterval: "01/07/2026 - 15/07/2026",
-        amount: 4712.30,
-      ),
-      Trip(
-        title: "Encontro de Devs",
-        dateInterval: "22/09/2026 - 25/09/2026",
-        amount: 830.00,
-      ),
-    ];
-  }
-}
+// (ApiService mock foi removido para usar os DAOs)
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,6 +80,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   User? _currentUser;
   List<Trip>? _trips;
+  Map<int, double> _tripAmounts = {};
+  double _totalBalanceBrl = 0.0;
   bool _isLoading = true;
 
   @override
@@ -129,16 +91,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final api = ApiService();
-    final results = await Future.wait([
-      api.fetchUser(),
-      api.fetchTrips(),
-    ]);
+    // Busca ou cria o usuário padrão para funcionar o app localmente
+    User? user = await UserDAO().getUser('nicole@exemplo.com', '123');
+    if (user == null) {
+      final newUser = User(name: "Nicole Grazzioli", email: "nicole@exemplo.com", password: "123");
+      await UserDAO().insertUser(newUser);
+      user = await UserDAO().getUser('nicole@exemplo.com', '123');
+    }
+
+    // Busca viagens do banco
+    final dbTrips = await TripDAO().getTripsByUser(user!.id!);
+    
+    // Calcula o valor total (BRL) para cada viagem somando os gastos
+    final expenseDAO = ExpenseDAO();
+    Map<int, double> amounts = {};
+    for (var trip in dbTrips) {
+      final expenses = await expenseDAO.getExpensesByTrip(trip.id!);
+      double total = 0.0;
+      for (var exp in expenses) {
+        total += exp.amountBrl;
+      }
+      amounts[trip.id!] = total;
+    }
+
+    // Calcula saldo total das carteiras
+    double totalWalletBrl = 0.0;
+    final wallets = await WalletDAO().getWalletsByUser(user!.id!);
+    for (var w in wallets) {
+      totalWalletBrl += w.balance * w.averageVet;
+    }
 
     if (mounted) {
+      print("Usuário logado: ${user?.name} (ID: ${user?.id})");
+      print("Total de viagens buscadas: ${dbTrips.length}");
       setState(() {
-        _currentUser = results[0] as User;
-        _trips = results[1] as List<Trip>;
+        _currentUser = user;
+        _trips = dbTrips;
+        _tripAmounts = amounts;
+        _totalBalanceBrl = totalWalletBrl;
         _isLoading = false;
       });
     }
@@ -207,10 +197,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Column(
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(
+                                const Text(
                                   "Saldo",
                                   style: TextStyle(
                                     color: Colors.white,
@@ -219,8 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 Text(
-                                  "R\$ 8.710,96",
-                                  style: TextStyle(
+                                  "R\$ ${_totalBalanceBrl.toStringAsFixed(2).replaceAll('.', ',')}",
+                                  style: const TextStyle(
                                     color: AppColors.moneyGreen,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
@@ -250,24 +240,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // --- LISTA DE VIAGENS ---
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: _trips?.length ?? 0,
-                      itemBuilder: (context, index) {
-                        final trip = _trips![index];
-                        return _buildTripCard(context, trip);
-                      },
-                    ),
+                    child: _trips == null || _trips!.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 40.0),
+                              child: Text(
+                                "Para onde vamos?\nCrie sua primeira viagem clicando no botão +",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white54, 
+                                  fontSize: 18, 
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            itemCount: _trips?.length ?? 0,
+                            itemBuilder: (context, index) {
+                              final trip = _trips![index];
+                              return _buildTripCard(context, trip);
+                            },
+                          ),
                   ),
                 ],
               ),
             ),
       floatingActionButton: CustomFAB(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          if (_currentUser == null) return;
+          await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const NewTripScreen()),
+            MaterialPageRoute(
+              builder: (context) => NewTripScreen(userId: _currentUser!.id!),
+            ),
           );
+          _loadData(); // Recarrega os dados ao voltar
         },
       ),
       bottomNavigationBar: CustomBottomNavBar(
@@ -290,23 +299,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTripCard(BuildContext context, Trip trip) {
+    // coverType pode ter uma URL http, assets/ ou ser vazio
+    bool isNetwork = trip.coverType.startsWith('http');
+    bool hasImage = trip.coverType.isNotEmpty;
+    double tripAmount = _tripAmounts[trip.id!] ?? 0.0;
+    
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => TripDetailsScreen(trip: trip),
           ),
         );
+        _loadData(); // Recarrega caso a viagem tenha sido editada ou excluída
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         height: 120,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          image: trip.imageUrl != null
+          image: hasImage
               ? DecorationImage(
-                  image: NetworkImage(trip.imageUrl!),
+                  image: isNetwork 
+                      ? NetworkImage(trip.coverType) as ImageProvider 
+                      : AssetImage(trip.coverType),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
                     Colors.black.withOpacity(0.4),
@@ -314,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : null,
-          color: trip.imageUrl == null ? const Color(0xFF1E293B) : null,
+          color: !hasImage ? const Color(0xFF1E293B) : null,
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -333,11 +350,11 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  trip.dateInterval,
+                  trip.endDate != null ? "${trip.startDate} - ${trip.endDate}" : trip.startDate,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 Text(
-                  "R\$ ${trip.amount.toStringAsFixed(2)}",
+                  "R\$ ${tripAmount.toStringAsFixed(2)}",
                   style: const TextStyle(
                     color: AppColors.moneyGreen,
                     fontSize: 22,

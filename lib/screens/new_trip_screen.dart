@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import 'home_screen.dart';
+import '../core/models/trip.dart';
+import '../core/dao/trip_dao.dart';
 
 class NewTripScreen extends StatefulWidget {
   final Trip? trip;
-  const NewTripScreen({super.key, this.trip});
+  final int? userId;
+  const NewTripScreen({super.key, this.trip, this.userId});
 
   @override
   State<NewTripScreen> createState() => _NewTripScreenState();
@@ -21,7 +23,20 @@ class _NewTripScreenState extends State<NewTripScreen> {
     super.initState();
     if (widget.trip != null) {
       _titleController.text = widget.trip!.title;
-      // Simular carregamento da capa e datas seria feito aqui com dados reais
+      try {
+        final startParts = widget.trip!.startDate.split('/');
+        _startDate = DateTime(int.parse(startParts[2]), int.parse(startParts[1]), int.parse(startParts[0]));
+        
+        final endParts = widget.trip!.endDate?.split('/');
+        _endDate = DateTime(int.parse(endParts![2]), int.parse(endParts[1]), int.parse(endParts[0]));
+      } catch (e) {
+        _startDate = DateTime.now();
+      }
+      
+      final coverMatch = _covers.firstWhere((c) => c["url"] == widget.trip!.coverType, orElse: () => {"name": "Praia"});
+      _selectedCover = coverMatch["name"]!;
+    } else {
+      _selectedCover = _covers[0]["name"]!;
     }
   }
 
@@ -180,9 +195,39 @@ class _NewTripScreenState extends State<NewTripScreen> {
                   backgroundColor: AppColors.moneyGreen,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
-                  // TODO: Salvar lógica
-                  Navigator.pop(context);
+                onPressed: () async {
+                  if (_titleController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Por favor, preencha o título da viagem.'),
+                      backgroundColor: Colors.red,
+                    ));
+                    return;
+                  }
+                  
+                  final trip = Trip(
+                    id: widget.trip?.id,
+                    userId: widget.userId ?? widget.trip!.userId, 
+                    title: _titleController.text.trim(),
+                    startDate: "${_startDate.day.toString().padLeft(2,'0')}/${_startDate.month.toString().padLeft(2,'0')}/${_startDate.year}",
+                    endDate: _endDate != null ? "${_endDate!.day.toString().padLeft(2,'0')}/${_endDate!.month.toString().padLeft(2,'0')}/${_endDate!.year}" : null,
+                    coverType: _covers.firstWhere((c) => c["name"] == _selectedCover)["url"]!,
+                  );
+
+                  try {
+                    if (widget.trip != null) {
+                      await TripDAO().updateTrip(trip);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Viagem atualizada com sucesso!'), backgroundColor: AppColors.moneyGreen));
+                    } else {
+                      int id = await TripDAO().insertTrip(trip);
+                      print("Viagem criada com sucesso no SQLite! ID: $id");
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Viagem criada com sucesso!'), backgroundColor: AppColors.moneyGreen));
+                    }
+                  } catch (e) {
+                    print("Erro ao salvar viagem: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red));
+                  }
+                  
+                  if (mounted) Navigator.pop(context);
                 },
                 child: const Text(
                   "Salvar",

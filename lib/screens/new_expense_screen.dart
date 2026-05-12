@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import '../core/models/expense.dart';
+import '../core/models/wallet.dart';
+import '../core/dao/expense_dao.dart';
+import '../core/dao/userDAO.dart';
+import '../core/dao/wallet_dao.dart';
 
 class NewExpenseScreen extends StatefulWidget {
+  final int tripId;
   final String tripTitle;
-  final bool isEditing;
-  final Map<String, dynamic>? expenseData; // Dados do gasto para edição
+  final Expense? expense;
 
   const NewExpenseScreen({
     super.key, 
+    required this.tripId,
     required this.tripTitle,
-    this.isEditing = false,
-    this.expenseData,
+    this.expense,
   });
 
   @override
@@ -21,8 +26,9 @@ class NewExpenseScreen extends StatefulWidget {
 class _NewExpenseScreenState extends State<NewExpenseScreen> {
   String _selectedCurrency = 'Reais';
   final List<String> _currencies = ['Reais', 'Euro', 'Dólar'];
+  List<Wallet>? _wallets;
   
-  DateTime? _selectedDate;
+  DateTime? _selectedDate = DateTime.now();
   bool _useAverageCost = true;
   String? _selectedCategory;
   
@@ -39,16 +45,58 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.isEditing && widget.expenseData != null) {
-      final data = widget.expenseData!;
-      _titleController.text = data['title'] ?? '';
-      _amountController.text = data['amount']?.toString() ?? '';
-      _selectedCurrency = data['currency'] ?? 'Reais';
-      _selectedCategory = data['category'] ?? '';
-      _exchangeRateController.text = data['exchangeRate']?.toString() ?? '1.0';
-      _descriptionController.text = data['description'] ?? '';
-      _useAverageCost = data['useAverageCost'] ?? true;
-      // Datas e fotos seriam preenchidas aqui também
+    if (widget.expense != null) {
+      final data = widget.expense!;
+      _titleController.text = data.title;
+      _amountController.text = data.amount.toString();
+      _selectedCurrency = data.currency;
+      _selectedCategory = data.category;
+      _exchangeRateController.text = data.exchangeRate?.toString() ?? '1.0';
+      _descriptionController.text = data.description ?? '';
+      _useAverageCost = data.isAverageCost;
+      try {
+        final dateParts = data.date.split('/');
+        _selectedDate = DateTime(int.parse(dateParts[2]), int.parse(dateParts[1]), int.parse(dateParts[0]));
+      } catch (e) {
+        _selectedDate = DateTime.now();
+      }
+    }
+    _loadCurrenciesAndVET();
+  }
+
+  Future<void> _loadCurrenciesAndVET() async {
+    final user = await UserDAO().getUser('nicole@exemplo.com', '123');
+    if (user != null) {
+      final wallets = await WalletDAO().getWalletsByUser(user.id!);
+      if (mounted) {
+        setState(() {
+          _wallets = wallets;
+          for (var w in wallets) {
+            if (!_currencies.contains(w.currency)) {
+              _currencies.add(w.currency);
+            }
+          }
+        });
+        _updateExchangeRate();
+      }
+    }
+  }
+
+  void _updateExchangeRate() {
+    if (_useAverageCost && _wallets != null) {
+      if (_selectedCurrency == 'Reais') {
+        _exchangeRateController.text = '1.0';
+      } else {
+        final wallet = _wallets!.cast<Wallet?>().firstWhere(
+          (w) => w!.currency == _selectedCurrency, 
+          orElse: () => null,
+        );
+        if (wallet != null) {
+          _exchangeRateController.text = wallet.averageVet.toStringAsFixed(2);
+        } else {
+          _exchangeRateController.text = '1.0';
+        }
+      }
     }
   }
 
@@ -127,12 +175,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
         title: Column(
           children: [
             Text(widget.tripTitle, style: const TextStyle(color: AppColors.offWhite, fontSize: 24, fontWeight: FontWeight.w500, fontFamily: 'Inter')),
-            Text(widget.isEditing ? "editar gasto" : "novo gasto", style: const TextStyle(color: AppColors.offWhite, fontSize: 20, fontWeight: FontWeight.w500, fontFamily: 'Inter')),
+            Text(widget.expense != null ? "editar gasto" : "novo gasto", style: const TextStyle(color: AppColors.offWhite, fontSize: 20, fontWeight: FontWeight.w500, fontFamily: 'Inter')),
           ],
         ),
         centerTitle: true,
         toolbarHeight: 80,
-        actions: widget.isEditing ? [
+        actions: widget.expense != null ? [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: () {
@@ -146,9 +194,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar", style: TextStyle(color: Colors.white))),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        await ExpenseDAO().deleteExpense(widget.expense!.id!);
+                        if (mounted) {
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                        }
                       },
                       child: const Text("Excluir", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ),
@@ -200,6 +251,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             setState(() {
                               _selectedCurrency = newValue;
                             });
+                            _updateExchangeRate();
                           }
                         },
                         items: _currencies.map<DropdownMenuItem<String>>((String value) {
@@ -289,6 +341,9 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                           setState(() {
                             _useAverageCost = val;
                           });
+                          if (val) {
+                            _updateExchangeRate();
+                          }
                         },
                         activeColor: AppColors.moneyGreen,
                         activeTrackColor: AppColors.moneyGreen.withOpacity(0.5),
@@ -372,9 +427,38 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  onPressed: () {
-                    // Lógica para salvar gasto
-                    Navigator.pop(context);
+                  onPressed: () async {
+                    if (_titleController.text.trim().isEmpty || _amountController.text.trim().isEmpty || _selectedCategory == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preencha título, valor e categoria')));
+                      return;
+                    }
+
+                    final double amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
+                    final double exchangeRate = double.tryParse(_exchangeRateController.text.replaceAll(',', '.')) ?? 1.0;
+                    final double amountBrl = amount * exchangeRate;
+                    final DateTime dt = _selectedDate ?? DateTime.now();
+
+                    final newExpense = Expense(
+                      id: widget.expense?.id,
+                      tripId: widget.tripId,
+                      title: _titleController.text.trim(),
+                      amount: amount,
+                      currency: _selectedCurrency,
+                      category: _selectedCategory!,
+                      date: "${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}",
+                      isAverageCost: _useAverageCost,
+                      exchangeRate: exchangeRate,
+                      amountBrl: amountBrl,
+                      description: _descriptionController.text.trim(),
+                    );
+
+                    if (widget.expense != null) {
+                      await ExpenseDAO().updateExpense(newExpense);
+                    } else {
+                      await ExpenseDAO().insertExpense(newExpense);
+                    }
+
+                    if (mounted) Navigator.pop(context);
                   },
                   child: const Text(
                     "Salvar",

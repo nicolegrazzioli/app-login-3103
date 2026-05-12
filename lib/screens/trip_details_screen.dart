@@ -6,9 +6,13 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/search_filter_bar.dart';
 import '../widgets/custom_fab.dart';
 import 'profile_screen.dart';
-import 'new_expense_screen.dart';
 import 'new_trip_screen.dart';
+import 'new_expense_screen.dart';
 import 'balances_screen.dart';
+import '../core/models/trip.dart';
+import '../core/models/expense.dart';
+import '../core/dao/expense_dao.dart';
+import '../core/dao/trip_dao.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final Trip trip;
@@ -20,6 +24,37 @@ class TripDetailsScreen extends StatefulWidget {
 }
 
 class _TripDetailsScreenState extends State<TripDetailsScreen> {
+  List<Expense>? _expenses;
+  double _totalAmount = 0.0;
+  Map<String, double> _categoryTotals = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpenses();
+  }
+
+  Future<void> _loadExpenses() async {
+    if (widget.trip.id == null) return;
+    final expenses = await ExpenseDAO().getExpensesByTrip(widget.trip.id!);
+    
+    double total = 0.0;
+    Map<String, double> catTotals = {};
+    
+    for (var exp in expenses) {
+      total += exp.amountBrl;
+      catTotals[exp.category] = (catTotals[exp.category] ?? 0.0) + exp.amountBrl;
+    }
+    
+    if (mounted) {
+      setState(() {
+        _expenses = expenses;
+        _totalAmount = total;
+        _categoryTotals = catTotals;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,53 +116,43 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            // Valor Total - Placeholder enquanto não puxamos do banco
-            const Text(
-              "R\$ 4712,30",
-              style: TextStyle(
+            // Valor Total Dinâmico
+            Text(
+              "R\$ ${_totalAmount.toStringAsFixed(2)}",
+              style: const TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
-                color: AppColors.moneyGreen, // Verde para os valores descritos pelo usuário
+                color: AppColors.moneyGreen,
               ),
             ),
             const SizedBox(height: 40),
             
-            // Gráfico de Pizza Básico com fl_chart
-            SizedBox(
-              height: 180,
-              child: PieChart(
-                PieChartData(
-                  sectionsSpace: 4,
-                  centerSpaceRadius: 0,
-                  sections: [
-                    PieChartSectionData(
-                      color: categories[0].color, // Alimentação
-                      value: 40,
-                      title: '',
-                      radius: 90,
-                    ),
-                    PieChartSectionData(
-                      color: categories[1].color, // Mercado
-                      value: 30,
-                      title: '',
-                      radius: 90,
-                    ),
-                    PieChartSectionData(
-                      color: categories[2].color, // Transporte
-                      value: 20,
-                      title: '',
-                      radius: 90,
-                    ),
-                    PieChartSectionData(
-                      color: categories[3].color, // Hospedagem
-                      value: 10,
-                      title: '',
-                      radius: 90,
-                    ),
-                  ],
+            // Gráfico de Pizza Dinâmico
+            if (_totalAmount > 0)
+              SizedBox(
+                height: 180,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 4,
+                    centerSpaceRadius: 0,
+                    sections: _categoryTotals.entries.map((entry) {
+                      // Find category color from the mocked categories list in home_screen
+                      final cat = categories.firstWhere(
+                        (c) => c.name == entry.key, 
+                        orElse: () => categories[0]
+                      );
+                      return PieChartSectionData(
+                        color: cat.color,
+                        value: entry.value,
+                        title: '',
+                        radius: 90,
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-            ),
+              )
+            else
+              const SizedBox(height: 180, child: Center(child: Text("Nenhum gasto registrado", style: TextStyle(color: Colors.white54)))),
             const SizedBox(height: 40),
             
             Padding(
@@ -141,31 +166,37 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             const SizedBox(height: 16),
             
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                children: [
-                  const Text(
-                    "xx/xx/xx, dia da semana",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildExpenseItem("Título do gasto", categories[3], "€ 1,50", "R\$ 10,00"),
-                  const Divider(color: AppColors.silverBorder, height: 1),
-                  _buildExpenseItem("Título do gasto", categories[5], "€ 1,50", "R\$ 10,00"),
-                  const Divider(color: AppColors.silverBorder, height: 1),
-                  const SizedBox(height: 16),
-                  
-                  const Text(
-                    "xx/xx/xx, dia da semana",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildExpenseItem("Título do gasto", categories[3], "€ 1,50", "R\$ 10,00"),
-                  const Divider(color: AppColors.silverBorder, height: 1),
-                  _buildExpenseItem("Título do gasto", categories[5], "€ 1,50", "R\$ 10,00"),
-                  const SizedBox(height: 80), // Padding extra para não ocluir com o bottomMenu/FAB
-                ],
-              ),
+              child: _expenses == null || _expenses!.isEmpty
+                  ? const Center(child: Text("Ainda não há gastos nesta viagem.", style: TextStyle(color: Colors.white54, fontSize: 16)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      itemCount: _expenses!.length,
+                      itemBuilder: (context, index) {
+                        final expense = _expenses![index];
+                        final cat = categories.firstWhere((c) => c.name == expense.category, orElse: () => categories[0]);
+                        final currencySymbol = expense.currency == 'Euro' ? '€' : (expense.currency == 'Dólar' ? '\$' : 'R\$');
+                        
+                        return Column(
+                          children: [
+                            if (index == 0 || _expenses![index].date != _expenses![index-1].date)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    expense.date,
+                                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                            _buildExpenseItem(expense, cat, "$currencySymbol ${expense.amount.toStringAsFixed(2)}", "R\$ ${expense.amountBrl.toStringAsFixed(2)}"),
+                            const Divider(color: AppColors.silverBorder, height: 1),
+                            if (index == _expenses!.length - 1)
+                              const SizedBox(height: 80), // Padding extra no final
+                          ],
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -173,11 +204,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       
       floatingActionButton: CustomFAB(
         rightPadding: 32.0,
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => NewExpenseScreen(tripTitle: widget.trip.title)),
+            MaterialPageRoute(builder: (context) => NewExpenseScreen(tripId: widget.trip.id!, tripTitle: widget.trip.title)),
           );
+          _loadExpenses(); // Atualiza a lista e totais
         },
       ),
       
@@ -205,9 +237,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     );
   }
 
-  Widget _buildExpenseItem(String title, Category category, String originalAmount, String convertedAmount) {
+  Widget _buildExpenseItem(Expense expense, Category category, String originalAmount, String convertedAmount) {
     return Dismissible(
-      key: UniqueKey(), // Idealmente usar o ID do gasto real aqui
+      key: ValueKey(expense.id ?? expense.title), 
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -224,28 +256,33 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             content: const Text("Tem certeza que deseja excluir este gasto?", style: TextStyle(color: Colors.white70)),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar", style: TextStyle(color: Colors.white))),
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Excluir", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+              TextButton(
+                onPressed: () async {
+                  await ExpenseDAO().deleteExpense(expense.id!);
+                  if (mounted) {
+                    Navigator.pop(ctx, true);
+                    _loadExpenses();
+                  }
+                }, 
+                child: const Text("Excluir", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+              ),
             ],
           ),
         );
       },
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => NewExpenseScreen(
+                tripId: widget.trip.id!,
                 tripTitle: widget.trip.title,
-                isEditing: true,
-                expenseData: {
-                  'title': title,
-                  'amount': originalAmount.split(' ')[1], // Extrai o número do "€ 1,50"
-                  'currency': originalAmount.split(' ')[0] == '€' ? 'Euro' : 'Dólar',
-                  'category': category.name,
-                },
+                expense: expense,
               ),
             ),
           );
+          _loadExpenses();
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -267,7 +304,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500)),
+                    Text(expense.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 4),
                     Text(category.name, style: const TextStyle(color: Colors.white70, fontSize: 14)),
                   ],
@@ -306,9 +343,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.pop(ctx); // Fechar dialog
-                Navigator.pop(context); // Voltar para a home
+              onPressed: () async {
+                await TripDAO().deleteTrip(widget.trip.id!);
+                if (mounted) {
+                  Navigator.pop(ctx); // Fechar dialog
+                  Navigator.pop(context); // Voltar para a home
+                }
               },
               child: const Text("Excluir", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             ),

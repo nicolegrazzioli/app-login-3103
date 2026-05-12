@@ -21,9 +21,9 @@ class AppDatabase {
   Future<Database> _initDatabase() async {
     final String path;
     if (kIsWeb) {
-      path = 'database.db';
+      path = 'pilago_app.db';
     } else {
-      path = join(await getDatabasesPath(), 'database.db');
+      path = join(await getDatabasesPath(), 'pilago_app.db');
     }
 
     return openDatabase(
