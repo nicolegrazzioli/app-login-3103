@@ -3,22 +3,43 @@ import '../models/trip.dart';
 import '../api/api_client.dart';
 
 class TripDAO {
+  String _toApiDate(String date) {
+    // dd/MM/yyyy -> yyyy-MM-dd
+    final parts = date.split('/');
+    if (parts.length == 3) {
+      return "${parts[2]}-${parts[1]}-${parts[0]}";
+    }
+    return date;
+  }
+
+  String _fromApiDate(String date) {
+    // yyyy-MM-dd -> dd/MM/yyyy
+    final parts = date.split('-');
+    if (parts.length == 3) {
+      return "${parts[2]}/${parts[1]}/${parts[0]}";
+    }
+    return date;
+  }
+
   Future<int> insertTrip(Trip trip) async {
     try {
       final response = await ApiClient.post('/trips', {
         'title': trip.title,
-        'startDate': trip.startDate,
-        'endDate': trip.endDate,
+        'startDate': _toApiDate(trip.startDate),
+        'endDate': trip.endDate != null ? _toApiDate(trip.endDate!) : null,
         'coverType': trip.coverType,
       });
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        return data['id'] ?? 1; // Retorna o ID gerado pelo backend
+        return data['id'] ?? 1;
+      } else {
+        print("Erro na API (Status ${response.statusCode}): ${response.body}");
+        throw Exception("Erro ao criar viagem. Status: ${response.statusCode}");
       }
     } catch (e) {
       print("Erro ao inserir viagem na API: $e");
+      throw e;
     }
-    return 0;
   }
 
   Future<List<Trip>> getTripsByUser(int userId) async {
@@ -29,10 +50,10 @@ class TripDAO {
         return data.map((e) {
           return Trip(
             id: e['id'],
-            userId: userId, // Backend gerencia o userId pelo JWT
+            userId: userId,
             title: e['title'],
-            startDate: e['startDate'],
-            endDate: e['endDate'],
+            startDate: _fromApiDate(e['startDate']),
+            endDate: e['endDate'] != null ? _fromApiDate(e['endDate']) : null,
             coverType: e['coverType'],
           );
         }).toList();

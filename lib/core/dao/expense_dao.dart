@@ -3,6 +3,22 @@ import '../models/expense.dart';
 import '../api/api_client.dart';
 
 class ExpenseDAO {
+  String _toApiDate(String date) {
+    final parts = date.split('/');
+    if (parts.length == 3) {
+      return "${parts[2]}-${parts[1]}-${parts[0]}";
+    }
+    return date;
+  }
+
+  String _fromApiDate(String date) {
+    final parts = date.split('-');
+    if (parts.length == 3) {
+      return "${parts[2]}/${parts[1]}/${parts[0]}";
+    }
+    return date;
+  }
+
   Future<int> insertExpense(Expense expense) async {
     try {
       final response = await ApiClient.post('/expenses', {
@@ -11,7 +27,7 @@ class ExpenseDAO {
         'amount': expense.amount,
         'currency': expense.currency,
         'category': expense.category,
-        'date': expense.date,
+        'date': _toApiDate(expense.date),
         'isAverageCost': expense.isAverageCost,
         'exchangeRate': expense.exchangeRate,
         'amountBrl': expense.amountBrl,
@@ -21,11 +37,14 @@ class ExpenseDAO {
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         return data['id'] ?? 1;
+      } else {
+        print("Erro na API: ${response.body}");
+        throw Exception("Erro: ${response.statusCode}");
       }
     } catch (e) {
       print("Erro ao inserir gasto na API: $e");
+      throw e;
     }
-    return 0;
   }
 
   Future<List<Expense>> getExpensesByTrip(int tripId) async {
@@ -41,7 +60,7 @@ class ExpenseDAO {
             amount: e['amount']?.toDouble() ?? 0.0,
             currency: e['currency'],
             category: e['category'],
-            date: e['date'],
+            date: _fromApiDate(e['date']),
             isAverageCost: e['isAverageCost'] ?? false,
             exchangeRate: e['exchangeRate']?.toDouble() ?? 1.0,
             amountBrl: e['amountBrl']?.toDouble() ?? 0.0,

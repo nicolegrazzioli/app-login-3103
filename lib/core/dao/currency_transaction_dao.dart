@@ -3,6 +3,22 @@ import '../models/currency_transaction.dart';
 import '../api/api_client.dart';
 
 class CurrencyTransactionDAO {
+  String _toApiDate(String date) {
+    final parts = date.split('/');
+    if (parts.length == 3) {
+      return "${parts[2]}-${parts[1]}-${parts[0]}";
+    }
+    return date;
+  }
+
+  String _fromApiDate(String date) {
+    final parts = date.split('-');
+    if (parts.length == 3) {
+      return "${parts[2]}/${parts[1]}/${parts[0]}";
+    }
+    return date;
+  }
+
   Future<int> insertTransaction(CurrencyTransaction transaction) async {
     try {
       final response = await ApiClient.post('/currency-transactions', {
@@ -10,7 +26,7 @@ class CurrencyTransactionDAO {
         'currency': transaction.currency,
         'amountBrl': transaction.amountBrl,
         'source': transaction.source,
-        'date': transaction.date,
+        'date': _toApiDate(transaction.date),
         'vetRate': transaction.vetRate,
         'description': transaction.description,
         'photoPath': transaction.photoPath,
@@ -18,11 +34,14 @@ class CurrencyTransactionDAO {
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         return data['id'] ?? 1;
+      } else {
+        print("Erro na API: ${response.body}");
+        throw Exception("Erro: ${response.statusCode}");
       }
     } catch (e) {
       print("Erro ao inserir transação na API: $e");
+      throw e;
     }
-    return 0;
   }
 
   Future<List<CurrencyTransaction>> getTransactionsByUser(int userId) async {
@@ -38,7 +57,7 @@ class CurrencyTransactionDAO {
             currency: e['currency'],
             amountBrl: e['amountBrl']?.toDouble() ?? 0.0,
             source: e['source'],
-            date: e['date'],
+            date: _fromApiDate(e['date']),
             vetRate: e['vetRate']?.toDouble() ?? 1.0,
             description: e['description'],
             photoPath: e['photoPath'],

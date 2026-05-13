@@ -41,7 +41,7 @@ class AuthService {
         // Como o JWT tem as infos, ou o backend manda um /profile, por agora mockamos o currentUser
         // com o e-mail, e depois o ideal seria um endpoint para buscar os dados completos.
         // Por ora, para não quebrar a tela:
-        final tempUser = User(name: "Usuário", email: email, password: "---");
+        final tempUser = User(id: 0, name: "Usuário", email: email, password: "---");
         currentUser = tempUser;
         return tempUser;
       }
