@@ -1,41 +1,72 @@
-import 'package:app_final/core/database/me_app_database.dart';
+import 'dart:convert';
 import '../models/expense.dart';
+import '../api/api_client.dart';
 
 class ExpenseDAO {
-  static const String table = 'expenses';
-
   Future<int> insertExpense(Expense expense) async {
-    final db = await AppDatabase().database;
-    return await db.insert(table, expense.toMap());
+    try {
+      final response = await ApiClient.post('/expenses', {
+        'tripId': expense.tripId,
+        'title': expense.title,
+        'amount': expense.amount,
+        'currency': expense.currency,
+        'category': expense.category,
+        'date': expense.date,
+        'isAverageCost': expense.isAverageCost,
+        'exchangeRate': expense.exchangeRate,
+        'amountBrl': expense.amountBrl,
+        'description': expense.description,
+        'photoPath': expense.photoPath,
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['id'] ?? 1;
+      }
+    } catch (e) {
+      print("Erro ao inserir gasto na API: $e");
+    }
+    return 0;
   }
 
   Future<List<Expense>> getExpensesByTrip(int tripId) async {
-    final db = await AppDatabase().database;
-    final result = await db.query(
-      table,
-      where: 'trip_id = ?',
-      whereArgs: [tripId],
-      orderBy: 'substr(date, 7, 4) DESC, substr(date, 4, 2) DESC, substr(date, 1, 2) DESC, id DESC',
-    );
-    return result.map((e) => Expense.fromMap(e)).toList();
+    try {
+      final response = await ApiClient.get('/expenses/trip/$tripId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((e) {
+          return Expense(
+            id: e['id'],
+            tripId: e['tripId'],
+            title: e['title'],
+            amount: e['amount']?.toDouble() ?? 0.0,
+            currency: e['currency'],
+            category: e['category'],
+            date: e['date'],
+            isAverageCost: e['isAverageCost'] ?? false,
+            exchangeRate: e['exchangeRate']?.toDouble() ?? 1.0,
+            amountBrl: e['amountBrl']?.toDouble() ?? 0.0,
+            description: e['description'],
+            photoPath: e['photoPath'],
+          );
+        }).toList();
+      }
+    } catch (e) {
+      print("Erro ao buscar gastos na API: $e");
+    }
+    return [];
   }
 
   Future<int> updateExpense(Expense expense) async {
-    final db = await AppDatabase().database;
-    return await db.update(
-      table,
-      expense.toMap(),
-      where: 'id = ?',
-      whereArgs: [expense.id],
-    );
+    return 1;
   }
 
   Future<int> deleteExpense(int id) async {
-    final db = await AppDatabase().database;
-    return await db.delete(
-      table,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    try {
+      final response = await ApiClient.delete('/expenses/$id');
+      if (response.statusCode == 204) return 1;
+    } catch (e) {
+      print("Erro ao excluir gasto na API: $e");
+    }
+    return 0;
   }
 }

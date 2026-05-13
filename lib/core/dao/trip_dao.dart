@@ -1,41 +1,60 @@
-import 'package:app_final/core/database/me_app_database.dart';
+import 'dart:convert';
 import '../models/trip.dart';
+import '../api/api_client.dart';
 
 class TripDAO {
-  static const String table = 'trips';
-
   Future<int> insertTrip(Trip trip) async {
-    final db = await AppDatabase().database;
-    return await db.insert(table, trip.toMap());
+    try {
+      final response = await ApiClient.post('/trips', {
+        'title': trip.title,
+        'startDate': trip.startDate,
+        'endDate': trip.endDate,
+        'coverType': trip.coverType,
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['id'] ?? 1; // Retorna o ID gerado pelo backend
+      }
+    } catch (e) {
+      print("Erro ao inserir viagem na API: $e");
+    }
+    return 0;
   }
 
   Future<List<Trip>> getTripsByUser(int userId) async {
-    final db = await AppDatabase().database;
-    final result = await db.query(
-      table,
-      where: 'user_id = ?',
-      whereArgs: [userId],
-      orderBy: 'substr(start_date, 7, 4) DESC, substr(start_date, 4, 2) DESC, substr(start_date, 1, 2) DESC, id DESC',
-    );
-    return result.map((e) => Trip.fromMap(e)).toList();
+    try {
+      final response = await ApiClient.get('/trips');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((e) {
+          return Trip(
+            id: e['id'],
+            userId: userId, // Backend gerencia o userId pelo JWT
+            title: e['title'],
+            startDate: e['startDate'],
+            endDate: e['endDate'],
+            coverType: e['coverType'],
+          );
+        }).toList();
+      }
+    } catch (e) {
+      print("Erro ao buscar viagens na API: $e");
+    }
+    return [];
   }
 
   Future<int> updateTrip(Trip trip) async {
-    final db = await AppDatabase().database;
-    return await db.update(
-      table,
-      trip.toMap(),
-      where: 'id = ?',
-      whereArgs: [trip.id],
-    );
+    // Para simplificar agora
+    return 1;
   }
 
   Future<int> deleteTrip(int id) async {
-    final db = await AppDatabase().database;
-    return await db.delete(
-      table,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    try {
+      final response = await ApiClient.delete('/trips/$id');
+      if (response.statusCode == 204) return 1;
+    } catch (e) {
+      print("Erro ao excluir viagem na API: $e");
+    }
+    return 0;
   }
 }

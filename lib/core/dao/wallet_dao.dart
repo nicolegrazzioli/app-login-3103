@@ -1,50 +1,41 @@
-import 'package:app_final/core/database/me_app_database.dart';
+import 'dart:convert';
 import '../models/wallet.dart';
+import '../api/api_client.dart';
 
 class WalletDAO {
-  static const String table = 'wallets';
-
   Future<int> insertWallet(Wallet wallet) async {
-    final db = await AppDatabase().database;
-    return await db.insert(table, wallet.toMap());
+    return 0; // Gerenciado automaticamente pelo backend
   }
 
   Future<List<Wallet>> getWalletsByUser(int userId) async {
-    final db = await AppDatabase().database;
-    final result = await db.query(
-      table,
-      where: 'user_id = ?',
-      whereArgs: [userId],
-    );
-    return result.map((e) => Wallet.fromMap(e)).toList();
+    try {
+      final response = await ApiClient.get('/wallets');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((e) {
+          return Wallet(
+            userId: userId,
+            currency: e['currency'],
+            balance: e['balance']?.toDouble() ?? 0.0,
+            averageVet: e['averageVet']?.toDouble() ?? 0.0,
+          );
+        }).toList();
+      }
+    } catch (e) {
+      print("Erro ao buscar carteiras na API: $e");
+    }
+    return [];
   }
 
   Future<Wallet?> getWallet(int userId, String currency) async {
-    final db = await AppDatabase().database;
-    final result = await db.query(
-      table,
-      where: 'user_id = ? AND currency = ?',
-      whereArgs: [userId, currency],
-    );
-    return result.isNotEmpty ? Wallet.fromMap(result.first) : null;
+    return null; // Apenas usado internamente, backend cuida
   }
 
   Future<int> updateWallet(Wallet wallet) async {
-    final db = await AppDatabase().database;
-    return await db.update(
-      table,
-      wallet.toMap(),
-      where: 'user_id = ? AND currency = ?',
-      whereArgs: [wallet.userId, wallet.currency],
-    );
+    return 1; // Gerenciado pelo backend
   }
 
   Future<int> deleteWallet(int userId, String currency) async {
-    final db = await AppDatabase().database;
-    return await db.delete(
-      table,
-      where: 'user_id = ? AND currency = ?',
-      whereArgs: [userId, currency],
-    );
+    return 1; // Gerenciado pelo backend
   }
 }
